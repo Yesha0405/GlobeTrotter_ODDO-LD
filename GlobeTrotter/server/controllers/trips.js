@@ -1,5 +1,9 @@
 const db = require("../config/db");
 
+const {
+  calculateTripBudget
+} = require("../services/budget");
+
 // ============================================
 // CREATE TRIP
 // POST /api/trips
@@ -373,6 +377,39 @@ const addStop = async (req, res) => {
   }
 };
 
+// ============================================
+// GET TRIP BUDGET
+// GET /api/trips/:id/budget
+// ============================================
+
+const getTripBudget = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const budget = await calculateTripBudget(id);
+
+    if (!budget) {
+      return res.status(404).json({
+        success: false,
+        message: "Trip not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      budget
+    });
+
+  } catch (error) {
+    console.error("Get trip budget error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to calculate trip budget",
+      error: error.message
+    });
+  }
+};
 
 // ============================================
 // EXPORT CONTROLLERS
@@ -382,5 +419,6 @@ module.exports = {
   createTrip,
   getTrips,
   getTripById,
-  addStop
+  addStop,
+  getTripBudget
 };

@@ -5,19 +5,23 @@ const {
   createTrip,
   getTrips,
   getTripById,
-  addStop
+  addStop,
+  getTripBudget
 } = require("../controllers/trips");
 
 // Get all trips
 router.get("/", getTrips);
 
-// Create a new trip
+// Create a trip
 router.post("/", createTrip);
 
-// Get a single trip with stops and activities
+// Get trip budget
+router.get("/:id/budget", getTripBudget);
+
+// Get a single trip
 router.get("/:id", getTripById);
 
-// Add a city/stop to a trip
+// Add city/stop to trip
 router.post("/:id/stops", addStop);
 
 module.exports = router;
