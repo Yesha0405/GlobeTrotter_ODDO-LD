@@ -182,3 +182,40 @@ export async function deleteExpense(tripId, expenseId) {
     throw normalizeApiError(error);
   }
 }
+
+
+export async function deleteStop(tripId, stopId) {
+  try {
+    const response = await apiClient.delete(
+      `/trips/${tripId}/stops/${stopId}`
+    );
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+
+export async function deleteActivity(stopId, activityId) {
+  try {
+    const response = await apiClient.delete(
+      `/activities/stops/${stopId}/activities/${activityId}`
+    );
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+
+export async function updateActivity(stopId, activityId, activity) {
+  try {
+    const response = await apiClient.put(
+      `/activities/stops/${stopId}/activities/${activityId}`,
+      activity
+    );
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}

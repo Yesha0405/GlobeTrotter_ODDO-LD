@@ -191,7 +191,7 @@ export default function ActivityModal({ isOpen, onClose, onSave, activityData })
             {/* Price (number) */}
             <div className="space-y-1">
               <label htmlFor="price" className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Price / Cost (USD)
+                Price / Cost
               </label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />

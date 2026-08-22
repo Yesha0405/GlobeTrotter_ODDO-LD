@@ -9,6 +9,14 @@ export default function BudgetCard({ budget, spent, remaining, percentage, statu
 
   const activeColor = budgetColors[status] || budgetColors.safe;
 
+  const formatCurrency = (value) => {
+    if (currency === 'INR') {
+      return `₹${value.toLocaleString('en-IN')}`;
+    }
+    const symbol = currency === 'USD' ? '$' : '';
+    return `${currency} ${symbol}${value.toLocaleString()}`;
+  };
+
   return (
     <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm space-y-5 font-body">
       {/* Header */}
@@ -24,14 +32,16 @@ export default function BudgetCard({ budget, spent, remaining, percentage, statu
             Total Budget
           </span>
           <span className="text-sm text-[#0f172a] font-bold">
-          ₹{budget.toLocaleString("en-IN")}          </span>
+            {formatCurrency(budget)}
+          </span>
         </div>
         <div className="p-3 bg-slate-50 border border-slate-100 rounded-[10px]">
           <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">
             Total Spent
           </span>
           <span className="text-sm text-[#0f172a] font-bold">
-            ₹{budget.toLocaleString("en-IN")}          </span>
+            {formatCurrency(spent)}
+          </span>
         </div>
       </div>
 
@@ -72,9 +82,10 @@ export default function BudgetCard({ budget, spent, remaining, percentage, statu
       <div className="pt-4 border-t border-slate-100 flex justify-between items-center text-sm font-semibold">
         <span className="text-slate-500">Remaining Balance</span>
         <span className="text-[#0f172a] font-extrabold text-base">
-          ₹{budget.toLocaleString("en-IN")}
+          {formatCurrency(remaining)}
         </span>
       </div>
     </div>
   );
 }
+

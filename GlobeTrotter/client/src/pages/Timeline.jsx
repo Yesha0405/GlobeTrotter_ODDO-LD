@@ -58,6 +58,20 @@ export default function Timeline() {
   // Budget summary calculations
   const budgetSum = useMemo(() => {
     if (!trip) return null;
+    if (trip.budgetData) {
+      const budget = Number(trip.budget || 0);
+      const spent = Number(trip.budgetData.spent || 0);
+      const remaining = Number(trip.budgetData.remaining || 0);
+      const percentage = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+      const status = spent >= budget ? "over" : spent >= budget * 0.75 ? "warning" : "safe";
+      return {
+        budget,
+        spent,
+        remaining,
+        percentage: percentage > 100 ? 100 : percentage,
+        status
+      };
+    }
     return getBudgetSummary(trip.budget || 0, trip.expenses || []);
   }, [trip]);
 
@@ -286,13 +300,13 @@ export default function Timeline() {
                   <div className="p-3 bg-slate-50 rounded-[10px] border border-slate-100">
                     <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Budget</span>
                     <span className="text-sm text-[#0f172a] font-bold">
-                      {trip.currency || 'USD'} ${budgetSum.budget.toLocaleString()}
+                      {trip.currency || 'USD'} {budgetSum.budget.toLocaleString()}
                     </span>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-[10px] border border-slate-100">
                     <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Spent</span>
                     <span className="text-sm text-[#0f172a] font-bold">
-                      {trip.currency || 'USD'} ${budgetSum.spent.toLocaleString()}
+                      {trip.currency || 'USD'} {budgetSum.spent.toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -331,7 +345,7 @@ export default function Timeline() {
                 <div className="pt-4 border-t border-slate-100 flex justify-between items-center text-sm font-semibold">
                   <span className="text-slate-500">Remaining</span>
                   <span className="text-[#0f172a] font-bold">
-                    {trip.currency || 'USD'} ${budgetSum.remaining.toLocaleString()}
+                    {trip.currency || 'USD'} {budgetSum.remaining.toLocaleString()}
                   </span>
                 </div>
 

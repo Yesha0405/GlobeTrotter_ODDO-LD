@@ -16,7 +16,10 @@ import {
   addActivityToStop as apiAddActivity,
   getTripBudget,
   addExpense as apiAddExpense,
-  deleteExpense as apiDeleteExpense
+  deleteExpense as apiDeleteExpense,
+  deleteStop as apiDeleteStop,
+  deleteActivity as apiDeleteActivity,
+  updateActivity as apiUpdateActivity
 } from "../services/api";
 
 import { toISODate } from "../utils/date";
@@ -423,7 +426,22 @@ export function TripProvider({ children }) {
               activity.date,
 
             start_time:
-              activity.time || null
+              activity.time || null,
+
+            name:
+              activity.name,
+
+            type:
+              activity.type,
+
+            duration:
+              activity.duration,
+
+            price:
+              activity.price,
+
+            description:
+              activity.description
           }
         );
 
@@ -521,6 +539,105 @@ export function TripProvider({ children }) {
 
 
   // ==================================================
+  // DELETE STOP FROM TRIP
+  // ==================================================
+
+  const deleteStopFromTrip =
+    useCallback(
+      async (tripId, stopId) => {
+        await apiDeleteStop(tripId, stopId);
+
+        const updatedTrip =
+          await loadTrip(tripId);
+
+        setTrips((prev) =>
+          prev.map((trip) =>
+            trip.id === String(tripId)
+              ? updatedTrip
+              : trip
+          )
+        );
+      },
+      [loadTrip]
+    );
+
+
+  // ==================================================
+  // UPDATE ACTIVITY IN STOP
+  // ==================================================
+
+  const updateActivityInStop =
+    useCallback(
+      async (
+        tripId,
+        stopId,
+        activityId,
+        activity
+      ) => {
+        await apiUpdateActivity(
+          stopId,
+          activityId,
+          {
+            name: activity.name,
+            type: activity.type,
+            time: activity.time || null,
+            duration: activity.duration,
+            price: activity.price,
+            description: activity.description
+          }
+        );
+
+        const updatedTrip =
+          await loadTrip(tripId);
+
+        setTrips((prev) =>
+          prev.map((trip) =>
+            trip.id === String(tripId)
+              ? updatedTrip
+              : trip
+          )
+        );
+
+        return updatedTrip;
+      },
+      [loadTrip]
+    );
+
+
+  // ==================================================
+  // REMOVE ACTIVITY FROM STOP
+  // ==================================================
+
+  const removeActivityFromStop =
+    useCallback(
+      async (
+        tripId,
+        stopId,
+        activityId
+      ) => {
+        await apiDeleteActivity(
+          stopId,
+          activityId
+        );
+
+        const updatedTrip =
+          await loadTrip(tripId);
+
+        setTrips((prev) =>
+          prev.map((trip) =>
+            trip.id === String(tripId)
+              ? updatedTrip
+              : trip
+          )
+        );
+
+        return updatedTrip;
+      },
+      [loadTrip]
+    );
+
+
+  // ==================================================
   // REFRESH TRIP
   // ==================================================
 
@@ -569,6 +686,12 @@ export function TripProvider({ children }) {
 
       deleteExpenseFromTrip,
 
+      deleteStopFromTrip,
+
+      updateActivityInStop,
+
+      removeActivityFromStop,
+
       refreshTrip,
 
       setActiveTrip
@@ -590,6 +713,12 @@ export function TripProvider({ children }) {
       addExpenseToTrip,
 
       deleteExpenseFromTrip,
+
+      deleteStopFromTrip,
+
+      updateActivityInStop,
+
+      removeActivityFromStop,
 
       refreshTrip,
 

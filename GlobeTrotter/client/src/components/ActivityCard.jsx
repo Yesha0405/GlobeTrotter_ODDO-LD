@@ -81,7 +81,7 @@ export default function ActivityCard({ activity, onEdit, onDelete }) {
         <DollarSign className="w-3.5 h-3.5 text-slate-400 shrink-0" />
         <span>
           {activity.price !== undefined && parseFloat(activity.price) > 0
-            ? `$${parseFloat(activity.price).toLocaleString()}`
+            ? parseFloat(activity.price).toLocaleString()
             : 'Free / Included'
           }
         </span>

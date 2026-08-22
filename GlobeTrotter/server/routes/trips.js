@@ -8,7 +8,8 @@ const {
   addStop,
   getTripBudget,
   addExpense,
-  deleteExpense
+  deleteExpense,
+  deleteStop
 } = require("../controllers/trips");
 
 
@@ -32,5 +33,8 @@ router.get("/:id", getTripById);
 
 // ADD stop
 router.post("/:id/stops", addStop);
+
+// DELETE stop
+router.delete("/:id/stops/:stopId", deleteStop);
 
 module.exports = router;

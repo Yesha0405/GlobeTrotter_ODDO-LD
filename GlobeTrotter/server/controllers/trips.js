@@ -243,135 +243,7 @@ const getTripById = async (req, res) => {
       [id]
     );
 
-    // ============================================
-// ADD EXPENSE
-// POST /api/trips/:id/expenses
-// ============================================
 
-const addExpense = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const {
-      category,
-      description,
-      amount
-    } = req.body;
-
-    if (!category || !amount) {
-      return res.status(400).json({
-        success: false,
-        message: "Category and amount are required"
-      });
-    }
-
-    const [trips] = await db.query(
-      `
-      SELECT id
-      FROM trips
-      WHERE id = ?
-      `,
-      [id]
-    );
-
-    if (trips.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Trip not found"
-      });
-    }
-
-    const [result] = await db.query(
-      `
-      INSERT INTO expenses
-      (
-        trip_id,
-        category,
-        description,
-        amount
-      )
-      VALUES (?, ?, ?, ?)
-      `,
-      [
-        id,
-        category,
-        description || null,
-        amount
-      ]
-    );
-
-    const [expense] = await db.query(
-      `
-      SELECT
-        id,
-        trip_id,
-        category,
-        description,
-        amount,
-        created_at
-      FROM expenses
-      WHERE id = ?
-      `,
-      [result.insertId]
-    );
-
-    res.status(201).json({
-      success: true,
-      message: "Expense added successfully 🎉",
-      expense: expense[0]
-    });
-
-  } catch (error) {
-    console.error("Add expense error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to add expense",
-      error: error.message
-    });
-  }
-};
-
-// ============================================
-// DELETE EXPENSE
-// DELETE /api/trips/:id/expenses/:expenseId
-// ============================================
-
-const deleteExpense = async (req, res) => {
-  try {
-    const { id, expenseId } = req.params;
-
-    const [result] = await db.query(
-      `
-      DELETE FROM expenses
-      WHERE id = ?
-      AND trip_id = ?
-      `,
-      [expenseId, id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Expense not found"
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "Expense deleted successfully"
-    });
-
-  } catch (error) {
-    console.error("Delete expense error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete expense",
-      error: error.message
-    });
-  }
-};
 
     res.json({
       success: true,
@@ -693,6 +565,47 @@ const deleteExpense = async (req, res) => {
 };
 
 // ============================================
+// DELETE STOP FROM TRIP
+// DELETE /api/trips/:id/stops/:stopId
+// ============================================
+
+const deleteStop = async (req, res) => {
+  try {
+    const { id, stopId } = req.params;
+
+    const [result] = await db.query(
+      `
+      DELETE FROM trip_stops
+      WHERE id = ?
+      AND trip_id = ?
+      `,
+      [stopId, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Stop not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Stop deleted successfully"
+    });
+
+  } catch (error) {
+    console.error("Delete stop error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete stop",
+      error: error.message
+    });
+  }
+};
+
+// ============================================
 // EXPORT CONTROLLERS
 // ============================================
 
@@ -703,5 +616,6 @@ module.exports = {
   addStop,
   getTripBudget,
   addExpense,
-  deleteExpense
+  deleteExpense,
+  deleteStop
 };

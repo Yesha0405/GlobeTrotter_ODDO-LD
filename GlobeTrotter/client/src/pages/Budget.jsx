@@ -47,6 +47,20 @@ export default function Budget() {
   // Budget summary numbers
   const budgetSummary = useMemo(() => {
     if (!trip) return null;
+    if (trip.budgetData) {
+      const budget = Number(trip.budget || 0);
+      const spent = Number(trip.budgetData.spent || 0);
+      const remaining = Number(trip.budgetData.remaining || 0);
+      const percentage = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+      const status = spent >= budget ? "over" : spent >= budget * 0.75 ? "warning" : "safe";
+      return {
+        budget,
+        spent,
+        remaining,
+        percentage: percentage > 100 ? 100 : percentage,
+        status
+      };
+    }
     return getBudgetSummary(trip.budget || 0, trip.expenses || []);
   }, [trip]);
 
@@ -223,7 +237,7 @@ const categories = [
               <div>
                 <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Total Spending</span>
                 <span className="text-xl font-extrabold text-[#0f172a]">
-                  {trip.currency || 'USD'} ${budgetSummary?.spent.toLocaleString()}
+                  {trip.currency || 'USD'} {budgetSummary?.spent.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -261,7 +275,7 @@ const categories = [
                       <div className="flex justify-between items-center font-semibold">
                         <span className="text-slate-600 capitalize">{cat}</span>
                         <span>
-                          {trip.currency || 'USD'} ${catAmt.toLocaleString()} ({catPct}%)
+                          {trip.currency || 'USD'} {catAmt.toLocaleString()} ({catPct}%)
                         </span>
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -316,22 +330,22 @@ const categories = [
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                {/* Amount */}
-                <div className="space-y-1">
-                  <label htmlFor="expense-amount" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    Amount (USD)
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="number"
-                      id="expense-amount"
-                      name="amount"
-                      value={expenseForm.amount}
-                      onChange={handleInputChange}
-                      placeholder="e.g. 45"
-                      min="0.01"
-                      step="any"
+              {/* Amount */}
+              <div className="space-y-1">
+                <label htmlFor="expense-amount" className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Amount ({trip.currency || 'USD'})
+                </label>
+                <div className="relative">
+                  <Wallet className="absolute left-3 top-2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="number"
+                    id="expense-amount"
+                    name="amount"
+                    value={expenseForm.amount}
+                    onChange={handleInputChange}
+                    placeholder="e.g. 45"
+                    min="0.01"
+                    step="any"
                       className={`w-full pl-8 pr-3 py-2 bg-white border rounded-[10px] text-sm text-[#0f172a] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-100 transition-all ${
                         errors.amount ? 'border-[#dc2626] focus:border-[#dc2626]' : 'border-[#e2e8f0] focus:border-[#0d9488]'
                       }`}
@@ -439,7 +453,7 @@ const categories = [
                           {formatDate(exp.date)}
                         </td>
                         <td className="py-3.5 px-2 text-right font-bold text-[#0f172a]">
-                          {trip.currency || 'USD'} ${parseFloat(exp.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {trip.currency || 'USD'} {parseFloat(exp.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         <td className="py-3.5 px-2 text-center">
                           <button

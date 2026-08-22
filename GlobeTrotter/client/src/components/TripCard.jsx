@@ -8,7 +8,22 @@ export default function TripCard({ trip, onViewClick }) {
 
   const duration = getTripDuration(trip.startDate, trip.endDate);
   const durationText = duration > 0 ? `${duration} ${duration === 1 ? 'day' : 'days'}` : '';
-  const budgetSum = trip.budget ? getBudgetSummary(trip.budget, trip.expenses) : null;
+  const getCardBudgetSum = () => {
+    if (trip.budgetData) {
+      const budget = Number(trip.budget || 0);
+      const spent = Number(trip.budgetData.spent || 0);
+      const remaining = Number(trip.budgetData.remaining || 0);
+      const percentage = budget > 0 ? Math.round((spent / budget) * 100) : 0;
+      return {
+        budget,
+        spent,
+        remaining,
+        percentage: percentage > 100 ? 100 : percentage
+      };
+    }
+    return trip.budget ? getBudgetSummary(trip.budget, trip.expenses) : null;
+  };
+  const budgetSum = getCardBudgetSum();
 
   // Status Badge color classes
   const statusBadges = {
