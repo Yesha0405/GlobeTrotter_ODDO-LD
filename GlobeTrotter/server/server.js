@@ -4,6 +4,7 @@ require("dotenv").config();
 
 const db = require("./config/db");
 const cityRoutes = require("./routes/cities");
+const tripRoutes = require("./routes/trips");
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/cities", cityRoutes);
+app.use("/api/trips", tripRoutes);
 
 const PORT = process.env.PORT || 5000;
 
