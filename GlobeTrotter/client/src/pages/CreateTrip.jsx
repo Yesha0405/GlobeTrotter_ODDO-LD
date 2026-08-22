@@ -115,45 +115,46 @@ export default function CreateTrip() {
   // ==================================================
   // 4. SUBMISSION ACTION
   // ==================================================
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitError(null);
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!validateForm()) return;
+  setSubmitError(null);
 
-    setIsSubmitting(true);
-    try {
-      const newTripId = `trip-${Date.now()}`;
-      
-      const newTrip = {
-        id: newTripId,
-        title: formData.title.trim(),
-        destination: formData.destination.trim(),
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        status: 'upcoming',
-        budget: formData.budget !== '' ? parseFloat(formData.budget) : 0,
-        currency: 'USD',
-        coverImage: getCoverImageForDestination(formData.destination.trim()),
-        travelers: formData.travelers,
-        transport: formData.transport,
-        stops: [],
-        expenses: []
-      };
+  if (!validateForm()) return;
 
-      // Call context state creator
-      await addTrip(newTrip);
-      
-      // Navigate directly to Itinerary Builder page for the new trip
-      navigate(`/build-itinerary/${newTripId}`);
-    } catch (err) {
-      setSubmitError('We could not create your trip. Please try again.');
-      console.error(err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  setIsSubmitting(true);
 
+  try {
+    const newTrip = await addTrip({
+      title: formData.title.trim(),
+      destination: formData.destination.trim(),
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      budget:
+        formData.budget !== ""
+          ? parseFloat(formData.budget)
+          : 0
+    });
+
+    navigate(
+      `/build-itinerary/${newTrip.id}`
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+    setSubmitError(
+      err.message ||
+      "We could not create your trip."
+    );
+
+  } finally {
+
+    setIsSubmitting(false);
+
+  }
+};
   return (
     <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 font-body">
       

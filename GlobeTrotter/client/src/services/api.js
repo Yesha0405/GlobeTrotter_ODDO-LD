@@ -1,65 +1,73 @@
-import axios from 'axios';
+import axios from "axios";
 
-// ==================================================
-// 1. API BASE URL Configuration
-// ==================================================
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "/api";
 
-// ==================================================
-// 2. AXIOS CLIENT Instance
-// ==================================================
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
-  timeout: 10000, // 10 seconds limit
+  timeout: 10000,
 });
 
-// ==================================================
-// 3. ERROR NORMALIZATION Helper
-// ==================================================
 export function normalizeApiError(error) {
-  if (error && error.response) {
-    // Server responded with non-2xx status code
+  if (error?.response) {
     return {
-      message: error.response.data?.message || `API Request failed with status ${error.response.status}`,
+      message:
+        error.response.data?.message ||
+        `API request failed (${error.response.status})`,
       status: error.response.status,
       data: error.response.data || null,
     };
-  } else if (error && error.request) {
-    // Request was dispatched but no response was received
+  }
+
+  if (error?.request) {
     return {
-      message: 'No response received from the backend. Please check your network connection.',
+      message:
+        "Backend is not responding. Make sure the Node server is running.",
       status: 0,
       data: null,
     };
-  } else {
-    // Setup issue triggered an error
-    return {
-      message: error?.message || 'An unknown network error occurred.',
-      status: -1,
-      data: null,
-    };
   }
+
+  return {
+    message: error?.message || "Unknown API error",
+    status: -1,
+    data: null,
+  };
 }
 
+
 // ==================================================
-// 4. TRIP API METHODS
+// CITIES
 // ==================================================
-export async function getTrips() {
+
+export async function getCities() {
   try {
-    const response = await apiClient.get('/trips');
+    const response = await apiClient.get("/cities");
     return response.data;
   } catch (error) {
     throw normalizeApiError(error);
   }
 }
 
-export async function getTrip(tripId) {
-  if (!tripId) {
-    throw new Error('Trip ID is required');
+
+// ==================================================
+// TRIPS
+// ==================================================
+
+export async function getTrips() {
+  try {
+    const response = await apiClient.get("/trips");
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
   }
+}
+
+
+export async function getTrip(tripId) {
   try {
     const response = await apiClient.get(`/trips/${tripId}`);
     return response.data;
@@ -68,210 +76,107 @@ export async function getTrip(tripId) {
   }
 }
 
+
 export async function createTrip(trip) {
-  if (!trip) {
-    throw new Error('Trip data is required');
-  }
   try {
-    const response = await apiClient.post('/trips', trip);
+    const response = await apiClient.post("/trips", trip);
     return response.data;
   } catch (error) {
     throw normalizeApiError(error);
   }
 }
 
-export async function updateTrip(tripId, updates) {
-  if (!tripId) {
-    throw new Error('Trip ID is required');
-  }
-  if (!updates) {
-    throw new Error('Updates data is required');
-  }
-  try {
-    const response = await apiClient.put(`/trips/${tripId}`, updates);
-    return response.data;
-  } catch (error) {
-    throw normalizeApiError(error);
-  }
-}
-
-export async function deleteTrip(tripId) {
-  if (!tripId) {
-    throw new Error('Trip ID is required');
-  }
-  try {
-    const response = await apiClient.delete(`/trips/${tripId}`);
-    return response.data;
-  } catch (error) {
-    throw normalizeApiError(error);
-  }
-}
 
 // ==================================================
-// 5. STOP API METHODS
+// STOPS
 // ==================================================
+
 export async function addStop(tripId, stop) {
-  if (!tripId) {
-    throw new Error('Trip ID is required');
-  }
-  if (!stop) {
-    throw new Error('Stop data is required');
-  }
   try {
-    const response = await apiClient.post(`/trips/${tripId}/stops`, stop);
+    const response = await apiClient.post(
+      `/trips/${tripId}/stops`,
+      stop
+    );
+
     return response.data;
   } catch (error) {
     throw normalizeApiError(error);
   }
 }
 
-export async function updateStop(tripId, stopId, updates) {
-  if (!tripId) {
-    throw new Error('Trip ID is required');
-  }
-  if (!stopId) {
-    throw new Error('Stop ID is required');
-  }
-  if (!updates) {
-    throw new Error('Updates data is required');
-  }
-  try {
-    const response = await apiClient.put(`/trips/${tripId}/stops/${stopId}`, updates);
-    return response.data;
-  } catch (error) {
-    throw normalizeApiError(error);
-  }
-}
-
-export async function deleteStop(tripId, stopId) {
-  if (!tripId) {
-    throw new Error('Trip ID is required');
-  }
-  if (!stopId) {
-    throw new Error('Stop ID is required');
-  }
-  try {
-    const response = await apiClient.delete(`/trips/${tripId}/stops/${stopId}`);
-    return response.data;
-  } catch (error) {
-    throw normalizeApiError(error);
-  }
-}
 
 // ==================================================
-// 6. ACTIVITY API METHODS
+// ACTIVITIES
 // ==================================================
-export async function addActivity(tripId, stopId, activity) {
-  if (!tripId) {
-    throw new Error('Trip ID is required');
-  }
-  if (!stopId) {
-    throw new Error('Stop ID is required');
-  }
-  if (!activity) {
-    throw new Error('Activity data is required');
-  }
+
+export async function getActivitiesByCity(cityId) {
   try {
-    const response = await apiClient.post(`/trips/${tripId}/stops/${stopId}/activities`, activity);
+    const response = await apiClient.get(
+      `/activities/city/${cityId}`
+    );
+
     return response.data;
   } catch (error) {
     throw normalizeApiError(error);
   }
 }
 
-export async function updateActivity(tripId, stopId, activityId, updates) {
-  if (!tripId) {
-    throw new Error('Trip ID is required');
-  }
-  if (!stopId) {
-    throw new Error('Stop ID is required');
-  }
-  if (!activityId) {
-    throw new Error('Activity ID is required');
-  }
-  if (!updates) {
-    throw new Error('Updates data is required');
-  }
+
+export async function addActivityToStop(stopId, activity) {
   try {
-    const response = await apiClient.put(`/trips/${tripId}/stops/${stopId}/activities/${activityId}`, updates);
+    const response = await apiClient.post(
+      `/activities/stops/${stopId}`,
+      activity
+    );
+
     return response.data;
   } catch (error) {
     throw normalizeApiError(error);
   }
 }
 
-export async function deleteActivity(tripId, stopId, activityId) {
-  if (!tripId) {
-    throw new Error('Trip ID is required');
-  }
-  if (!stopId) {
-    throw new Error('Stop ID is required');
-  }
-  if (!activityId) {
-    throw new Error('Activity ID is required');
-  }
+
+// ==================================================
+// BUDGET
+// ==================================================
+
+export async function getTripBudget(tripId) {
   try {
-    const response = await apiClient.delete(`/trips/${tripId}/stops/${stopId}/activities/${activityId}`);
+    const response = await apiClient.get(
+      `/trips/${tripId}/budget`
+    );
+
     return response.data;
   } catch (error) {
     throw normalizeApiError(error);
   }
 }
 
+
 // ==================================================
-// 7. EXPENSE API METHODS
+// EXPENSES
 // ==================================================
+
 export async function addExpense(tripId, expense) {
-  if (!tripId) {
-    throw new Error('Trip ID is required');
-  }
-  if (!expense) {
-    throw new Error('Expense data is required');
-  }
   try {
-    const response = await apiClient.post(`/trips/${tripId}/expenses`, expense);
+    const response = await apiClient.post(
+      `/trips/${tripId}/expenses`,
+      expense
+    );
+
     return response.data;
   } catch (error) {
     throw normalizeApiError(error);
   }
 }
+
 
 export async function deleteExpense(tripId, expenseId) {
-  if (!tripId) {
-    throw new Error('Trip ID is required');
-  }
-  if (!expenseId) {
-    throw new Error('Expense ID is required');
-  }
   try {
-    const response = await apiClient.delete(`/trips/${tripId}/expenses/${expenseId}`);
-    return response.data;
-  } catch (error) {
-    throw normalizeApiError(error);
-  }
-}
+    const response = await apiClient.delete(
+      `/trips/${tripId}/expenses/${expenseId}`
+    );
 
-// ==================================================
-// 8. SHARED TRIP METHODS
-// ==================================================
-export async function getSharedTrip(shareToken) {
-  if (!shareToken) {
-    throw new Error('Share token is required');
-  }
-  try {
-    const response = await apiClient.get(`/shared/${shareToken}`);
-    return response.data;
-  } catch (error) {
-    throw normalizeApiError(error);
-  }
-}
-
-export async function forkSharedTrip(shareToken) {
-  if (!shareToken) {
-    throw new Error('Share token is required');
-  }
-  try {
-    const response = await apiClient.post(`/shared/${shareToken}/fork`);
     return response.data;
   } catch (error) {
     throw normalizeApiError(error);

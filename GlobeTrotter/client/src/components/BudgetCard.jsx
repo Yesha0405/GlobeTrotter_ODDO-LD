@@ -1,6 +1,6 @@
 import { Wallet, AlertCircle, Percent } from 'lucide-react';
 
-export default function BudgetCard({ budget, spent, remaining, percentage, status, currency = 'USD' }) {
+export default function BudgetCard({ budget, spent, remaining, percentage, status, currency = 'INR' }) {
   const budgetColors = {
     safe: { text: 'text-[#059669]', bg: 'bg-emerald-50 border-emerald-100', progress: 'bg-[#059669]' },
     warning: { text: 'text-[#d97706]', bg: 'bg-amber-50 border-amber-100', progress: 'bg-[#d97706]' },
@@ -24,16 +24,14 @@ export default function BudgetCard({ budget, spent, remaining, percentage, statu
             Total Budget
           </span>
           <span className="text-sm text-[#0f172a] font-bold">
-            {currency} ${budget.toLocaleString()}
-          </span>
+          ₹{budget.toLocaleString("en-IN")}          </span>
         </div>
         <div className="p-3 bg-slate-50 border border-slate-100 rounded-[10px]">
           <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">
             Total Spent
           </span>
           <span className="text-sm text-[#0f172a] font-bold">
-            {currency} ${spent.toLocaleString()}
-          </span>
+            ₹{budget.toLocaleString("en-IN")}          </span>
         </div>
       </div>
 
@@ -74,7 +72,7 @@ export default function BudgetCard({ budget, spent, remaining, percentage, statu
       <div className="pt-4 border-t border-slate-100 flex justify-between items-center text-sm font-semibold">
         <span className="text-slate-500">Remaining Balance</span>
         <span className="text-[#0f172a] font-extrabold text-base">
-          {currency} ${remaining.toLocaleString()}
+          ₹{budget.toLocaleString("en-IN")}
         </span>
       </div>
     </div>

@@ -139,8 +139,13 @@ export default function Budget() {
     }
   };
 
-  const categories = ['Lodging', 'Food', 'Transport', 'Activities', 'Miscellaneous'];
-
+const categories = [
+  "Accommodation",
+  "Food",
+  "Transport",
+  "Activities",
+  "Other"
+];
   const categoryIcons = {
     Lodging: Wallet,
     Food: DollarSign,

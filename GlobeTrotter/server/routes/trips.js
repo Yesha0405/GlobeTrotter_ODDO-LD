@@ -6,22 +6,31 @@ const {
   getTrips,
   getTripById,
   addStop,
-  getTripBudget
+  getTripBudget,
+  addExpense,
+  deleteExpense
 } = require("../controllers/trips");
 
-// Get all trips
+
+// GET all trips
 router.get("/", getTrips);
 
-// Create a trip
+// CREATE trip
 router.post("/", createTrip);
 
-// Get trip budget
+// GET budget
 router.get("/:id/budget", getTripBudget);
 
-// Get a single trip
+// ADD expense
+router.post("/:id/expenses", addExpense);
+
+// DELETE expense
+router.delete("/:id/expenses/:expenseId", deleteExpense);
+
+// GET single trip
 router.get("/:id", getTripById);
 
-// Add city/stop to trip
+// ADD stop
 router.post("/:id/stops", addStop);
 
 module.exports = router;

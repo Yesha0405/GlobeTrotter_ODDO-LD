@@ -1,505 +1,625 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback
+} from "react";
 
-// ==================================================
-// 1. CONSTANTS / STORAGE KEYS
-// ==================================================
-const LOCAL_STORAGE_TRIPS_KEY = 'globetrotter_trips';
-const LOCAL_STORAGE_ACTIVE_TRIP_KEY = 'globetrotter_active_trip';
+import {
+  getTrips,
+  getTrip,
+  getCities,
+  createTrip as apiCreateTrip,
+  addStop as apiAddStop,
+  addActivityToStop as apiAddActivity,
+  getTripBudget,
+  addExpense as apiAddExpense,
+  deleteExpense as apiDeleteExpense
+} from "../services/api";
 
-// ==================================================
-// 2. SEED DATA
-// ==================================================
-const SEED_TRIPS = [
-  {
-    id: 'trip-1',
-    title: 'Paris Escape',
-    destination: 'Paris, France',
-    startDate: '2026-06-01',
-    endDate: '2026-06-07',
-    status: 'completed',
-    budget: 2500,
-    currency: 'EUR',
-    coverImage: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80',
-    travelers: 2,
-    stops: [
-      {
-        id: 'stop-1-1',
-        date: '2026-06-01',
-        location: 'Charles de Gaulle Airport',
-        title: 'Arrival in Paris',
-        description: 'Land at CDG airport, pick up luggage and transit to Hotel Lutetia.',
-        transport: 'Taxi',
-        activities: [
-          {
-            id: 'act-1-1-1',
-            name: 'Hotel Check-in',
-            type: 'Lodging',
-            time: '14:00',
-            duration: 45,
-            price: 0,
-            description: 'Check-in at Hotel Lutetia, settle into rooms and unpack.'
-          },
-          {
-            id: 'act-1-1-2',
-            name: 'Seine River Cruise',
-            type: 'Sightseeing',
-            time: '19:00',
-            duration: 120,
-            price: 30,
-            description: 'Evening cruise along the Seine to view landmark monuments lit up.'
-          }
-        ]
-      },
-      {
-        id: 'stop-1-2',
-        date: '2026-06-02',
-        location: 'Louvre Museum',
-        title: 'Cultural Highlights',
-        description: 'Spend the day browsing Louvre collections and stroll through the Tuileries Garden.',
-        transport: 'Metro',
-        activities: [
-          {
-            id: 'act-1-2-1',
-            name: 'Louvre Guided Tour',
-            type: 'Museum',
-            time: '09:30',
-            duration: 180,
-            price: 65,
-            description: 'Guided tour of historical art pieces including Mona Lisa and Venus de Milo.'
-          }
-        ]
-      }
-    ],
-    expenses: [
-      {
-        id: 'exp-1-1',
-        title: 'Hotel Lutetia Stay',
-        category: 'Lodging',
-        amount: 1200,
-        date: '2026-06-01'
-      },
-      {
-        id: 'exp-1-2',
-        title: 'Seine Cruise Tickets',
-        category: 'Activities',
-        amount: 60,
-        date: '2026-06-01'
-      },
-      {
-        id: 'exp-1-3',
-        title: 'Louvre Tour Tickets',
-        category: 'Activities',
-        amount: 130,
-        date: '2026-06-02'
-      },
-      {
-        id: 'exp-1-4',
-        title: 'Dinner at Le Comptoir',
-        category: 'Food',
-        amount: 95,
-        date: '2026-06-02'
-      }
-    ]
-  },
-  {
-    id: 'trip-2',
-    title: 'Tokyo Sakura Adventure',
-    destination: 'Tokyo, Japan',
-    startDate: '2027-03-25',
-    endDate: '2027-04-02',
-    status: 'upcoming',
-    budget: 4000,
-    currency: 'USD',
-    coverImage: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80',
-    travelers: 1,
-    stops: [
-      {
-        id: 'stop-2-1',
-        date: '2027-03-25',
-        location: 'Shinjuku Gyoen National Garden',
-        title: 'Sakura View Walk',
-        description: 'Stroll around Shinjuku Gyoen to see early cherry blossoms.',
-        transport: 'Train',
-        activities: [
-          {
-            id: 'act-2-1-1',
-            name: 'Cherry Blossom Picnic',
-            type: 'Sightseeing',
-            time: '13:00',
-            duration: 120,
-            price: 15,
-            description: 'Savor seasonal bento boxes under blooming sakura trees.'
-          }
-        ]
-      }
-    ],
-    expenses: [
-      {
-        id: 'exp-2-1',
-        title: 'Bento Picnic Lunch',
-        category: 'Food',
-        amount: 15,
-        date: '2027-03-25'
-      },
-      {
-        id: 'exp-2-2',
-        title: '7-Day JR Rail Pass',
-        category: 'Transport',
-        amount: 350,
-        date: '2027-03-24'
-      }
-    ]
-  },
-  {
-    id: 'trip-3',
-    title: 'Alps Ski Trip',
-    destination: 'Zermatt, Switzerland',
-    startDate: '2027-01-15',
-    endDate: '2027-01-22',
-    status: 'ongoing',
-    budget: 3500,
-    currency: 'CHF',
-    coverImage: 'https://images.unsplash.com/photo-1482867996988-2faec3cbb4f9?auto=format&fit=crop&w=800&q=80',
-    travelers: 3,
-    stops: [
-      {
-        id: 'stop-3-1',
-        date: '2027-01-15',
-        location: 'Matterhorn Glacier Paradise',
-        title: 'Rental Pickup & Check-in',
-        description: 'Transit to chalet, pick up rental skis, and purchase ski passes.',
-        transport: 'Cable Car',
-        activities: [
-          {
-            id: 'act-3-1-1',
-            name: 'Ski Gear Fitting',
-            type: 'Rental',
-            time: '10:00',
-            duration: 90,
-            price: 85,
-            description: 'Pick up fitted snow skis, boots, poles, and safety helmets.'
-          }
-        ]
-      }
-    ],
-    expenses: [
-      {
-        id: 'exp-3-1',
-        title: 'Alpine Ski Chalet (1 Week)',
-        category: 'Lodging',
-        amount: 1800,
-        date: '2027-01-15'
-      },
-      {
-        id: 'exp-3-2',
-        title: '6-Day Zermatt Ski Pass',
-        category: 'Activities',
-        amount: 450,
-        date: '2027-01-15'
-      },
-      {
-        id: 'exp-3-3',
-        title: 'Rental Skis Fitting',
-        category: 'Activities',
-        amount: 85,
-        date: '2027-01-15'
-      }
-    ]
-  }
-];
+import { toISODate } from "../utils/date";
 
-// ==================================================
-// 3. CONTEXT CREATION
-// ==================================================
 const TripContext = createContext(null);
 
+
 // ==================================================
-// 4. PROVIDER IMPLEMENTATION
+// HELPERS
 // ==================================================
-export function TripProvider({ children }) {
-  const [trips, setTrips] = useState([]);
-  const [activeTripId, setActiveTripId] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  // ==================================================
-  // 5. INITIALIZATION
-  // ==================================================
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    try {
-      const storedTrips = localStorage.getItem(LOCAL_STORAGE_TRIPS_KEY);
-      let parsedTrips = [];
-      if (storedTrips) {
-        try {
-          parsedTrips = JSON.parse(storedTrips);
-        } catch (e) {
-          console.error('Failed to parse stored trips JSON, seeding default data.', e);
-          parsedTrips = SEED_TRIPS;
-          localStorage.setItem(LOCAL_STORAGE_TRIPS_KEY, JSON.stringify(SEED_TRIPS));
-        }
-      } else {
-        parsedTrips = SEED_TRIPS;
-        localStorage.setItem(LOCAL_STORAGE_TRIPS_KEY, JSON.stringify(SEED_TRIPS));
-      }
+function getTripStatus(startDate, endDate) {
+  const today = new Date();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
 
-      if (!Array.isArray(parsedTrips) || parsedTrips.length === 0) {
-        parsedTrips = SEED_TRIPS;
-        localStorage.setItem(LOCAL_STORAGE_TRIPS_KEY, JSON.stringify(SEED_TRIPS));
-      }
+  today.setHours(0, 0, 0, 0);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
 
-      setTrips(parsedTrips);
+  if (today < start) return "upcoming";
+  if (today > end) return "completed";
 
-      const storedActiveId = localStorage.getItem(LOCAL_STORAGE_ACTIVE_TRIP_KEY);
-      if (storedActiveId && parsedTrips.some(t => t.id === storedActiveId)) {
-        setActiveTripId(storedActiveId);
-      } else {
-        setActiveTripId(null);
-      }
-    } catch (err) {
-      setError('Failed to initialize local data store.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // ==================================================
-  // 6. PERSISTENCE
-  // ==================================================
-  useEffect(() => {
-    // Only persist if trips state has been populated (i.e. loading is done)
-    if (!loading) {
-      try {
-        localStorage.setItem(LOCAL_STORAGE_TRIPS_KEY, JSON.stringify(trips));
-      } catch (err) {
-        console.error('Failed to save trips state to localStorage', err);
-        setError('Failed to write changes to local storage.');
-      }
-    }
-  }, [trips, loading]);
-
-  useEffect(() => {
-    if (!loading) {
-      try {
-        if (activeTripId) {
-          localStorage.setItem(LOCAL_STORAGE_ACTIVE_TRIP_KEY, activeTripId);
-        } else {
-          localStorage.removeItem(LOCAL_STORAGE_ACTIVE_TRIP_KEY);
-        }
-      } catch (err) {
-        console.error('Failed to save active trip key to localStorage', err);
-      }
-    }
-  }, [activeTripId, loading]);
-
-  // Synchronize the full activeTrip object when trips update
-  const activeTrip = useMemo(() => {
-    if (!activeTripId) return null;
-    return trips.find(t => t.id === activeTripId) || null;
-  }, [trips, activeTripId]);
-
-  // ==================================================
-  // 7. TRIP OPERATIONS
-  // ==================================================
-  const addTrip = useCallback((newTrip) => {
-    setTrips(prev => {
-      const formattedTrip = {
-        ...newTrip,
-        id: newTrip.id || `trip-${Date.now()}`,
-        stops: newTrip.stops || [],
-        expenses: newTrip.expenses || []
-      };
-      return [...prev, formattedTrip];
-    });
-  }, []);
-
-  const updateTrip = useCallback((tripId, updates) => {
-    setTrips(prev => prev.map(t => (t.id === tripId ? { ...t, ...updates } : t)));
-  }, []);
-
-  const deleteTrip = useCallback((tripId) => {
-    setTrips(prev => prev.filter(t => t.id !== tripId));
-    setActiveTripId(prev => (prev === tripId ? null : prev));
-  }, []);
-
-  const setActiveTrip = useCallback((tripId) => {
-    setActiveTripId(prev => {
-      const exists = trips.some(t => t.id === tripId);
-      return exists ? tripId : null;
-    });
-  }, [trips]);
-
-  // ==================================================
-  // 8. STOP OPERATIONS
-  // ==================================================
-  const addStopToTrip = useCallback((tripId, stop) => {
-    setTrips(prev => prev.map(t => {
-      if (t.id !== tripId) return t;
-      const formattedStop = {
-        ...stop,
-        id: stop.id || `stop-${Date.now()}`,
-        activities: stop.activities || []
-      };
-      return {
-        ...t,
-        stops: [...t.stops, formattedStop]
-      };
-    }));
-  }, []);
-
-  const updateStopInTrip = useCallback((tripId, stopId, updates) => {
-    setTrips(prev => prev.map(t => {
-      if (t.id !== tripId) return t;
-      return {
-        ...t,
-        stops: t.stops.map(s => (s.id === stopId ? { ...s, ...updates } : s))
-      };
-    }));
-  }, []);
-
-  const deleteStopFromTrip = useCallback((tripId, stopId) => {
-    setTrips(prev => prev.map(t => {
-      if (t.id !== tripId) return t;
-      return {
-        ...t,
-        stops: t.stops.filter(s => s.id !== stopId)
-      };
-    }));
-  }, []);
-
-  // ==================================================
-  // 9. ACTIVITY OPERATIONS
-  // ==================================================
-  const addActivityToStop = useCallback((tripId, stopId, activity) => {
-    setTrips(prev => prev.map(t => {
-      if (t.id !== tripId) return t;
-      return {
-        ...t,
-        stops: t.stops.map(s => {
-          if (s.id !== stopId) return s;
-          const formattedActivity = {
-            ...activity,
-            id: activity.id || `act-${Date.now()}`
-          };
-          return {
-            ...s,
-            activities: [...s.activities, formattedActivity]
-          };
-        })
-      };
-    }));
-  }, []);
-
-  const updateActivityInStop = useCallback((tripId, stopId, activityId, updates) => {
-    setTrips(prev => prev.map(t => {
-      if (t.id !== tripId) return t;
-      return {
-        ...t,
-        stops: t.stops.map(s => {
-          if (s.id !== stopId) return s;
-          return {
-            ...s,
-            activities: s.activities.map(a => (a.id === activityId ? { ...a, ...updates } : a))
-          };
-        })
-      };
-    }));
-  }, []);
-
-  const removeActivityFromStop = useCallback((tripId, stopId, activityId) => {
-    setTrips(prev => prev.map(t => {
-      if (t.id !== tripId) return t;
-      return {
-        ...t,
-        stops: t.stops.map(s => {
-          if (s.id !== stopId) return s;
-          return {
-            ...s,
-            activities: s.activities.filter(a => a.id !== activityId)
-          };
-        })
-      };
-    }));
-  }, []);
-
-  // ==================================================
-  // 10. EXPENSE OPERATIONS
-  // ==================================================
-  const addExpenseToTrip = useCallback((tripId, expense) => {
-    setTrips(prev => prev.map(t => {
-      if (t.id !== tripId) return t;
-      const formattedExpense = {
-        ...expense,
-        id: expense.id || `exp-${Date.now()}`
-      };
-      return {
-        ...t,
-        expenses: [...t.expenses, formattedExpense]
-      };
-    }));
-  }, []);
-
-  const deleteExpenseFromTrip = useCallback((tripId, expenseId) => {
-    setTrips(prev => prev.map(t => {
-      if (t.id !== tripId) return t;
-      return {
-        ...t,
-        expenses: t.expenses.filter(e => e.id !== expenseId)
-      };
-    }));
-  }, []);
-
-  // ==================================================
-  // 11. CONTEXT VALUE
-  // ==================================================
-  const value = useMemo(() => ({
-    trips,
-    activeTrip,
-    loading,
-    error,
-    addTrip,
-    updateTrip,
-    deleteTrip,
-    setActiveTrip,
-    addStopToTrip,
-    updateStopInTrip,
-    deleteStopFromTrip,
-    addActivityToStop,
-    updateActivityInStop,
-    removeActivityFromStop,
-    addExpenseToTrip,
-    deleteExpenseFromTrip
-  }), [
-    trips,
-    activeTrip,
-    loading,
-    error,
-    addTrip,
-    updateTrip,
-    deleteTrip,
-    setActiveTrip,
-    addStopToTrip,
-    updateStopInTrip,
-    deleteStopFromTrip,
-    addActivityToStop,
-    updateActivityInStop,
-    removeActivityFromStop,
-    addExpenseToTrip,
-    deleteExpenseFromTrip
-  ]);
-
-  return <TripContext.Provider value={value}>{children}</TripContext.Provider>;
+  return "ongoing";
 }
 
+
+function normalizeActivity(activity) {
+  return {
+    id: String(activity.id),
+    activityId: activity.activity_id,
+    name: activity.name,
+    type: activity.category || "Other",
+    time: activity.start_time
+      ? String(activity.start_time).slice(0, 5)
+      : "",
+    duration: Number(activity.duration_hours || 0) * 60,
+    price: Number(activity.estimated_cost || 0),
+    description: activity.description || "",
+    date: toISODate(activity.activity_date)
+  };
+}
+
+
+function normalizeTrip(detail, budgetData) {
+  const backendTrip = detail.trip;
+
+  const activities = detail.activities || [];
+
+  const stops = (detail.stops || []).map((stop) => ({
+    id: String(stop.id),
+    cityId: stop.city_id,
+
+    location: stop.city_name,
+
+    date: toISODate(stop.start_date),
+    endDate: toISODate(stop.end_date),
+
+    transport: "Flight",
+    notes: "",
+
+    activities: activities
+      .filter(
+        (activity) =>
+          activity.trip_stop_id === stop.id
+      )
+      .map(normalizeActivity)
+  }));
+
+  const expenses = (detail.expenses || []).map(
+    (expense) => ({
+      id: String(expense.id),
+      title:
+        expense.description ||
+        expense.category ||
+        "Expense",
+      category: expense.category,
+      amount: Number(expense.amount || 0),
+      date: expense.created_at
+        ? toISODate(expense.created_at)
+        : ""
+    })
+  );
+
+  const destination =
+    stops.length > 0
+      ? stops[0].location
+      : backendTrip.description || "Trip";
+
+  return {
+    id: String(backendTrip.id),
+
+    title: backendTrip.name,
+
+    destination,
+
+    startDate: toISODate(
+      backendTrip.start_date
+    ),
+
+    endDate: toISODate(
+      backendTrip.end_date
+    ),
+
+    status: getTripStatus(
+      backendTrip.start_date,
+      backendTrip.end_date
+    ),
+
+    budget: Number(backendTrip.budget || 0),
+
+    currency: "INR",
+
+    travelers: 1,
+
+    coverImage:
+      stops[0]?.image_url || null,
+
+    shareToken:
+      backendTrip.share_token,
+
+    isPublic:
+      Boolean(backendTrip.is_public),
+
+    stops,
+
+    expenses,
+
+    budgetData:
+      budgetData?.budget || null
+  };
+}
+
+
+export function TripProvider({ children }) {
+
+  const [trips, setTrips] = useState([]);
+
+  const [cities, setCities] = useState([]);
+
+  const [activeTripId, setActiveTripId] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState(null);
+
+
+  // ==================================================
+  // LOAD ONE TRIP
+  // ==================================================
+
+  const loadTrip = useCallback(
+    async (tripId) => {
+
+      const [detail, budget] =
+        await Promise.all([
+          getTrip(tripId),
+          getTripBudget(tripId)
+        ]);
+
+      return normalizeTrip(
+        detail,
+        budget
+      );
+    },
+    []
+  );
+
+
+  // ==================================================
+  // LOAD ALL TRIPS
+  // ==================================================
+
+  const loadTrips = useCallback(
+    async () => {
+
+      setLoading(true);
+      setError(null);
+
+      try {
+
+        const response =
+          await getTrips();
+
+        const backendTrips =
+          response.trips || [];
+
+        const detailedTrips =
+          await Promise.all(
+            backendTrips.map(
+              (trip) =>
+                loadTrip(trip.id)
+            )
+          );
+
+        setTrips(detailedTrips);
+
+      } catch (err) {
+
+        console.error(err);
+
+        setError(
+          err.message ||
+          "Failed to connect to backend"
+        );
+
+      } finally {
+
+        setLoading(false);
+
+      }
+    },
+    [loadTrip]
+  );
+
+
+  // ==================================================
+  // INITIAL LOAD
+  // ==================================================
+
+  useEffect(() => {
+
+    const initialize =
+      async () => {
+
+        try {
+
+          const cityResponse =
+            await getCities();
+
+          setCities(
+            cityResponse.cities || []
+          );
+
+          await loadTrips();
+
+        } catch (err) {
+
+          console.error(err);
+
+          setError(
+            err.message ||
+            "Failed to initialize application"
+          );
+
+          setLoading(false);
+        }
+      };
+
+    initialize();
+
+  }, [loadTrips]);
+
+
+  // ==================================================
+  // ACTIVE TRIP
+  // ==================================================
+
+  const activeTrip = useMemo(() => {
+
+    if (!activeTripId) return null;
+
+    return trips.find(
+      (trip) =>
+        trip.id === String(activeTripId)
+    ) || null;
+
+  }, [trips, activeTripId]);
+
+
+  const setActiveTrip =
+    useCallback((tripId) => {
+
+      setActiveTripId(
+        String(tripId)
+      );
+
+    }, []);
+
+
+  // ==================================================
+  // CREATE TRIP
+  // ==================================================
+
+  const addTrip = useCallback(
+    async (tripData) => {
+
+      const response =
+        await apiCreateTrip({
+          name: tripData.title,
+          description:
+            tripData.destination || "",
+          start_date:
+            tripData.startDate,
+          end_date:
+            tripData.endDate,
+          budget:
+            Number(tripData.budget || 0)
+        });
+
+      const createdTrip =
+        await loadTrip(
+          response.trip.id
+        );
+
+      setTrips((prev) => [
+        ...prev,
+        createdTrip
+      ]);
+
+      setActiveTripId(
+        String(response.trip.id)
+      );
+
+      return createdTrip;
+
+    },
+    [loadTrip]
+  );
+
+
+  // ==================================================
+  // ADD STOP
+  // ==================================================
+
+  const addStopToTrip =
+    useCallback(
+      async (tripId, stop) => {
+
+        const cityName =
+          stop.location
+            .trim()
+            .toLowerCase();
+
+        const city =
+          cities.find(
+            (c) =>
+              c.name
+                .toLowerCase() ===
+              cityName
+          );
+
+        if (!city) {
+
+          throw new Error(
+            `City "${stop.location}" was not found in the database.`
+          );
+        }
+
+        await apiAddStop(
+          tripId,
+          {
+            city_id: city.id,
+
+            start_date:
+              stop.date,
+
+            end_date:
+              stop.endDate ||
+              stop.date
+          }
+        );
+
+        const updatedTrip =
+          await loadTrip(tripId);
+
+        setTrips((prev) =>
+          prev.map((trip) =>
+            trip.id === String(tripId)
+              ? updatedTrip
+              : trip
+          )
+        );
+
+        return updatedTrip;
+
+      },
+      [cities, loadTrip]
+    );
+
+
+  // ==================================================
+  // ADD ACTIVITY
+  // ==================================================
+
+  const addActivityToStop =
+    useCallback(
+      async (
+        tripId,
+        stopId,
+        activity
+      ) => {
+
+        await apiAddActivity(
+          stopId,
+          {
+            activity_id:
+              activity.activityId,
+
+            activity_date:
+              activity.date,
+
+            start_time:
+              activity.time || null
+          }
+        );
+
+        const updatedTrip =
+          await loadTrip(tripId);
+
+        setTrips((prev) =>
+          prev.map((trip) =>
+            trip.id === String(tripId)
+              ? updatedTrip
+              : trip
+          )
+        );
+
+        return updatedTrip;
+
+      },
+      [loadTrip]
+    );
+
+
+  // ==================================================
+  // ADD EXPENSE
+  // ==================================================
+
+  const addExpenseToTrip =
+    useCallback(
+      async (
+        tripId,
+        expense
+      ) => {
+
+        await apiAddExpense(
+          tripId,
+          {
+            category:
+              expense.category,
+
+            description:
+              expense.title,
+
+            amount:
+              Number(expense.amount)
+          }
+        );
+
+        const updatedTrip =
+          await loadTrip(tripId);
+
+        setTrips((prev) =>
+          prev.map((trip) =>
+            trip.id === String(tripId)
+              ? updatedTrip
+              : trip
+          )
+        );
+
+        return updatedTrip;
+
+      },
+      [loadTrip]
+    );
+
+
+  // ==================================================
+  // DELETE EXPENSE
+  // ==================================================
+
+  const deleteExpenseFromTrip =
+    useCallback(
+      async (
+        tripId,
+        expenseId
+      ) => {
+
+        await apiDeleteExpense(
+          tripId,
+          expenseId
+        );
+
+        const updatedTrip =
+          await loadTrip(tripId);
+
+        setTrips((prev) =>
+          prev.map((trip) =>
+            trip.id === String(tripId)
+              ? updatedTrip
+              : trip
+          )
+        );
+
+      },
+      [loadTrip]
+    );
+
+
+  // ==================================================
+  // REFRESH TRIP
+  // ==================================================
+
+  const refreshTrip =
+    useCallback(
+      async (tripId) => {
+
+        const updatedTrip =
+          await loadTrip(tripId);
+
+        setTrips((prev) =>
+          prev.map((trip) =>
+            trip.id === String(tripId)
+              ? updatedTrip
+              : trip
+          )
+        );
+
+        return updatedTrip;
+
+      },
+      [loadTrip]
+    );
+
+
+  // ==================================================
+  // CONTEXT VALUE
+  // ==================================================
+
+  const value = useMemo(
+    () => ({
+      trips,
+      cities,
+      activeTrip,
+
+      loading,
+      error,
+
+      addTrip,
+
+      addStopToTrip,
+
+      addActivityToStop,
+
+      addExpenseToTrip,
+
+      deleteExpenseFromTrip,
+
+      refreshTrip,
+
+      setActiveTrip
+    }),
+    [
+      trips,
+      cities,
+      activeTrip,
+
+      loading,
+      error,
+
+      addTrip,
+
+      addStopToTrip,
+
+      addActivityToStop,
+
+      addExpenseToTrip,
+
+      deleteExpenseFromTrip,
+
+      refreshTrip,
+
+      setActiveTrip
+    ]
+  );
+
+
+  return (
+    <TripContext.Provider value={value}>
+      {children}
+    </TripContext.Provider>
+  );
+}
+
+
 // ==================================================
-// 12. useTrip CUSTOM HOOK
+// HOOK
 // ==================================================
+
 export function useTrip() {
-  const context = useContext(TripContext);
+
+  const context =
+    useContext(TripContext);
+
   if (!context) {
-    throw new Error('useTrip must be used within a TripProvider');
+    throw new Error(
+      "useTrip must be used inside TripProvider"
+    );
   }
+
   return context;
 }
