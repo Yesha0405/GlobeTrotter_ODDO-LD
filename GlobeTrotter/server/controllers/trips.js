@@ -142,10 +142,7 @@ const getTripById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // ----------------------------------------
     // Get trip details
-    // ----------------------------------------
-
     const [trips] = await db.query(
       `
       SELECT
@@ -172,42 +169,30 @@ const getTripById = async (req, res) => {
       });
     }
 
-    // ----------------------------------------
     // Get trip stops + city information
-    // ----------------------------------------
-
     const [stops] = await db.query(
       `
       SELECT
         ts.id,
-        ts.trip_id,
         ts.city_id,
         ts.start_date,
         ts.end_date,
         ts.stop_order,
-
         c.name AS city_name,
         c.country,
         c.region,
         c.cost_index,
         c.image_url
-
       FROM trip_stops ts
-
       JOIN cities c
         ON ts.city_id = c.id
-
       WHERE ts.trip_id = ?
-
       ORDER BY ts.stop_order ASC
       `,
       [id]
     );
 
-    // ----------------------------------------
     // Get activities belonging to this trip
-    // ----------------------------------------
-
     const [activities] = await db.query(
       `
       SELECT
@@ -241,10 +226,7 @@ const getTripById = async (req, res) => {
       [id]
     );
 
-    // ----------------------------------------
-    // Get expenses belonging to this trip
-    // ----------------------------------------
-
+        // Get expenses belonging to this trip
     const [expenses] = await db.query(
       `
       SELECT
@@ -254,19 +236,142 @@ const getTripById = async (req, res) => {
         description,
         amount,
         created_at
-
       FROM expenses
-
       WHERE trip_id = ?
-
       ORDER BY created_at DESC
       `,
       [id]
     );
 
-    // ----------------------------------------
-    // Return complete trip
-    // ----------------------------------------
+    // ============================================
+// ADD EXPENSE
+// POST /api/trips/:id/expenses
+// ============================================
+
+const addExpense = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      category,
+      description,
+      amount
+    } = req.body;
+
+    if (!category || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: "Category and amount are required"
+      });
+    }
+
+    const [trips] = await db.query(
+      `
+      SELECT id
+      FROM trips
+      WHERE id = ?
+      `,
+      [id]
+    );
+
+    if (trips.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Trip not found"
+      });
+    }
+
+    const [result] = await db.query(
+      `
+      INSERT INTO expenses
+      (
+        trip_id,
+        category,
+        description,
+        amount
+      )
+      VALUES (?, ?, ?, ?)
+      `,
+      [
+        id,
+        category,
+        description || null,
+        amount
+      ]
+    );
+
+    const [expense] = await db.query(
+      `
+      SELECT
+        id,
+        trip_id,
+        category,
+        description,
+        amount,
+        created_at
+      FROM expenses
+      WHERE id = ?
+      `,
+      [result.insertId]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Expense added successfully 🎉",
+      expense: expense[0]
+    });
+
+  } catch (error) {
+    console.error("Add expense error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to add expense",
+      error: error.message
+    });
+  }
+};
+
+// ============================================
+// DELETE EXPENSE
+// DELETE /api/trips/:id/expenses/:expenseId
+// ============================================
+
+const deleteExpense = async (req, res) => {
+  try {
+    const { id, expenseId } = req.params;
+
+    const [result] = await db.query(
+      `
+      DELETE FROM expenses
+      WHERE id = ?
+      AND trip_id = ?
+      `,
+      [expenseId, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Expense not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Expense deleted successfully"
+    });
+
+  } catch (error) {
+    console.error("Delete expense error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete expense",
+      error: error.message
+    });
+  }
+};
 
     res.json({
       success: true,
@@ -310,10 +415,7 @@ const addStop = async (req, res) => {
       });
     }
 
-    // ----------------------------------------
     // Check trip exists
-    // ----------------------------------------
-
     const [trips] = await db.query(
       `
       SELECT id
@@ -330,15 +432,10 @@ const addStop = async (req, res) => {
       });
     }
 
-    // ----------------------------------------
     // Check city exists
-    // ----------------------------------------
-
     const [cities] = await db.query(
       `
-      SELECT
-        id,
-        name
+      SELECT id, name
       FROM cities
       WHERE id = ?
       `,
@@ -352,17 +449,11 @@ const addStop = async (req, res) => {
       });
     }
 
-    // ----------------------------------------
     // Find next stop order
-    // ----------------------------------------
-
     const [orderResult] = await db.query(
       `
-      SELECT
-        COALESCE(MAX(stop_order), 0) + 1 AS next_order
-
+      SELECT COALESCE(MAX(stop_order), 0) + 1 AS next_order
       FROM trip_stops
-
       WHERE trip_id = ?
       `,
       [id]
@@ -370,10 +461,7 @@ const addStop = async (req, res) => {
 
     const stopOrder = orderResult[0].next_order;
 
-    // ----------------------------------------
     // Add stop
-    // ----------------------------------------
-
     const [result] = await db.query(
       `
       INSERT INTO trip_stops
@@ -395,10 +483,7 @@ const addStop = async (req, res) => {
       ]
     );
 
-    // ----------------------------------------
     // Return newly created stop
-    // ----------------------------------------
-
     const [stops] = await db.query(
       `
       SELECT
@@ -411,9 +496,7 @@ const addStop = async (req, res) => {
 
         c.name AS city_name,
         c.country,
-        c.region,
-        c.cost_index,
-        c.image_url
+        c.region
 
       FROM trip_stops ts
 
@@ -441,7 +524,6 @@ const addStop = async (req, res) => {
     });
   }
 };
-
 
 // ============================================
 // GET TRIP BUDGET
@@ -477,7 +559,6 @@ const getTripBudget = async (req, res) => {
   }
 };
 
-
 // ============================================
 // ADD EXPENSE
 // POST /api/trips/:id/expenses
@@ -493,28 +574,14 @@ const addExpense = async (req, res) => {
       amount
     } = req.body;
 
-    // ----------------------------------------
-    // Validation
-    // ----------------------------------------
-
-    if (!category || amount === undefined || amount === null) {
+    if (!category || amount === undefined) {
       return res.status(400).json({
         success: false,
         message: "Category and amount are required"
       });
     }
 
-    if (Number(amount) < 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Amount cannot be negative"
-      });
-    }
-
-    // ----------------------------------------
     // Check trip exists
-    // ----------------------------------------
-
     const [trips] = await db.query(
       `
       SELECT id
@@ -531,10 +598,7 @@ const addExpense = async (req, res) => {
       });
     }
 
-    // ----------------------------------------
     // Insert expense
-    // ----------------------------------------
-
     const [result] = await db.query(
       `
       INSERT INTO expenses
@@ -550,14 +614,11 @@ const addExpense = async (req, res) => {
         id,
         category,
         description || null,
-        amount
+        Number(amount)
       ]
     );
 
-    // ----------------------------------------
     // Return created expense
-    // ----------------------------------------
-
     const [expenses] = await db.query(
       `
       SELECT
@@ -567,9 +628,7 @@ const addExpense = async (req, res) => {
         description,
         amount,
         created_at
-
       FROM expenses
-
       WHERE id = ?
       `,
       [result.insertId]
@@ -577,7 +636,7 @@ const addExpense = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Expense added successfully 💰",
+      message: "Expense added successfully 🎉",
       expense: expenses[0]
     });
 
@@ -592,7 +651,6 @@ const addExpense = async (req, res) => {
   }
 };
 
-
 // ============================================
 // DELETE EXPENSE
 // DELETE /api/trips/:id/expenses/:expenseId
@@ -600,58 +658,27 @@ const addExpense = async (req, res) => {
 
 const deleteExpense = async (req, res) => {
   try {
-    const {
-      id,
-      expenseId
-    } = req.params;
+    const { id, expenseId } = req.params;
 
-    // ----------------------------------------
-    // Check expense exists for this trip
-    // ----------------------------------------
-
-    const [expenses] = await db.query(
+    const [result] = await db.query(
       `
-      SELECT
-        id,
-        trip_id
-
-      FROM expenses
-
+      DELETE FROM expenses
       WHERE id = ?
       AND trip_id = ?
       `,
-      [
-        expenseId,
-        id
-      ]
+      [expenseId, id]
     );
 
-    if (expenses.length === 0) {
+    if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
         message: "Expense not found"
       });
     }
 
-    // ----------------------------------------
-    // Delete expense
-    // ----------------------------------------
-
-    await db.query(
-      `
-      DELETE FROM expenses
-      WHERE id = ?
-      AND trip_id = ?
-      `,
-      [
-        expenseId,
-        id
-      ]
-    );
-
     res.json({
       success: true,
-      message: "Expense deleted successfully 🗑️"
+      message: "Expense deleted successfully"
     });
 
   } catch (error) {
@@ -664,7 +691,6 @@ const deleteExpense = async (req, res) => {
     });
   }
 };
-
 
 // ============================================
 // EXPORT CONTROLLERS
