@@ -32,7 +32,8 @@ export function normalizeApiError(error) {
   }
 
   return {
-    message: error?.message || "Unknown API error",
+    message:
+      error?.message || "Unknown API error",
     status: -1,
     data: null,
   };
@@ -69,7 +70,9 @@ export async function getTrips() {
 
 export async function getTrip(tripId) {
   try {
-    const response = await apiClient.get(`/trips/${tripId}`);
+    const response =
+      await apiClient.get(`/trips/${tripId}`);
+
     return response.data;
   } catch (error) {
     throw normalizeApiError(error);
@@ -79,7 +82,9 @@ export async function getTrip(tripId) {
 
 export async function createTrip(trip) {
   try {
-    const response = await apiClient.post("/trips", trip);
+    const response =
+      await apiClient.post("/trips", trip);
+
     return response.data;
   } catch (error) {
     throw normalizeApiError(error);
@@ -93,10 +98,11 @@ export async function createTrip(trip) {
 
 export async function addStop(tripId, stop) {
   try {
-    const response = await apiClient.post(
-      `/trips/${tripId}/stops`,
-      stop
-    );
+    const response =
+      await apiClient.post(
+        `/trips/${tripId}/stops`,
+        stop
+      );
 
     return response.data;
   } catch (error) {
@@ -111,9 +117,10 @@ export async function addStop(tripId, stop) {
 
 export async function getActivitiesByCity(cityId) {
   try {
-    const response = await apiClient.get(
-      `/activities/city/${cityId}`
-    );
+    const response =
+      await apiClient.get(
+        `/activities/city/${cityId}`
+      );
 
     return response.data;
   } catch (error) {
@@ -122,12 +129,16 @@ export async function getActivitiesByCity(cityId) {
 }
 
 
-export async function addActivityToStop(stopId, activity) {
+export async function addActivityToStop(
+  stopId,
+  activity
+) {
   try {
-    const response = await apiClient.post(
-      `/activities/stops/${stopId}`,
-      activity
-    );
+    const response =
+      await apiClient.post(
+        `/activities/stops/${stopId}`,
+        activity
+      );
 
     return response.data;
   } catch (error) {
@@ -142,9 +153,10 @@ export async function addActivityToStop(stopId, activity) {
 
 export async function getTripBudget(tripId) {
   try {
-    const response = await apiClient.get(
-      `/trips/${tripId}/budget`
-    );
+    const response =
+      await apiClient.get(
+        `/trips/${tripId}/budget`
+      );
 
     return response.data;
   } catch (error) {
@@ -157,12 +169,16 @@ export async function getTripBudget(tripId) {
 // EXPENSES
 // ==================================================
 
-export async function addExpense(tripId, expense) {
+export async function addExpense(
+  tripId,
+  expense
+) {
   try {
-    const response = await apiClient.post(
-      `/trips/${tripId}/expenses`,
-      expense
-    );
+    const response =
+      await apiClient.post(
+        `/trips/${tripId}/expenses`,
+        expense
+      );
 
     return response.data;
   } catch (error) {
@@ -171,11 +187,15 @@ export async function addExpense(tripId, expense) {
 }
 
 
-export async function deleteExpense(tripId, expenseId) {
+export async function deleteExpense(
+  tripId,
+  expenseId
+) {
   try {
-    const response = await apiClient.delete(
-      `/trips/${tripId}/expenses/${expenseId}`
-    );
+    const response =
+      await apiClient.delete(
+        `/trips/${tripId}/expenses/${expenseId}`
+      );
 
     return response.data;
   } catch (error) {

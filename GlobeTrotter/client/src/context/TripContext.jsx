@@ -44,89 +44,140 @@ function getTripStatus(startDate, endDate) {
 }
 
 
+// ==================================================
+// NORMALIZE ACTIVITY
+// ==================================================
+
 function normalizeActivity(activity) {
   return {
     id: String(activity.id),
+
     activityId: activity.activity_id,
+
     name: activity.name,
-    type: activity.category || "Other",
+
+    type:
+      activity.category || "Other",
+
     time: activity.start_time
       ? String(activity.start_time).slice(0, 5)
       : "",
-    duration: Number(activity.duration_hours || 0) * 60,
-    price: Number(activity.estimated_cost || 0),
-    description: activity.description || "",
-    date: toISODate(activity.activity_date)
+
+    duration:
+      Number(activity.duration_hours || 0) * 60,
+
+    price:
+      Number(activity.estimated_cost || 0),
+
+    description:
+      activity.description || "",
+
+    date:
+      toISODate(activity.activity_date)
   };
 }
 
 
+// ==================================================
+// NORMALIZE TRIP
+// ==================================================
+
 function normalizeTrip(detail, budgetData) {
   const backendTrip = detail.trip;
 
-  const activities = detail.activities || [];
+  const activities =
+    detail.activities || [];
 
-  const stops = (detail.stops || []).map((stop) => ({
-    id: String(stop.id),
-    cityId: stop.city_id,
+  const stops =
+    (detail.stops || []).map((stop) => ({
+      id: String(stop.id),
 
-    location: stop.city_name,
+      cityId: stop.city_id,
 
-    date: toISODate(stop.start_date),
-    endDate: toISODate(stop.end_date),
+      location: stop.city_name,
 
-    transport: "Flight",
-    notes: "",
+      date:
+        toISODate(stop.start_date),
 
-    activities: activities
-      .filter(
-        (activity) =>
-          activity.trip_stop_id === stop.id
-      )
-      .map(normalizeActivity)
-  }));
+      endDate:
+        toISODate(stop.end_date),
 
-  const expenses = (detail.expenses || []).map(
-    (expense) => ({
-      id: String(expense.id),
-      title:
-        expense.description ||
-        expense.category ||
-        "Expense",
-      category: expense.category,
-      amount: Number(expense.amount || 0),
-      date: expense.created_at
-        ? toISODate(expense.created_at)
-        : ""
-    })
-  );
+      transport: "Flight",
+
+      notes: "",
+
+      activities:
+        activities
+          .filter(
+            (activity) =>
+              activity.trip_stop_id === stop.id
+          )
+          .map(normalizeActivity)
+    }));
+
+
+  const expenses =
+    (detail.expenses || []).map(
+      (expense) => ({
+        id: String(expense.id),
+
+        title:
+          expense.description ||
+          expense.category ||
+          "Expense",
+
+        category:
+          expense.category,
+
+        amount:
+          Number(expense.amount || 0),
+
+        date:
+          expense.created_at
+            ? toISODate(
+                expense.created_at
+              )
+            : ""
+      })
+    );
+
 
   const destination =
     stops.length > 0
       ? stops[0].location
-      : backendTrip.description || "Trip";
+      : backendTrip.description ||
+        "Trip";
+
 
   return {
-    id: String(backendTrip.id),
+    id:
+      String(backendTrip.id),
 
-    title: backendTrip.name,
+    title:
+      backendTrip.name,
 
     destination,
 
-    startDate: toISODate(
-      backendTrip.start_date
-    ),
+    startDate:
+      toISODate(
+        backendTrip.start_date
+      ),
 
-    endDate: toISODate(
-      backendTrip.end_date
-    ),
+    endDate:
+      toISODate(
+        backendTrip.end_date
+      ),
 
-    status: getTripStatus(
-      backendTrip.start_date,
-      backendTrip.end_date
-    ),
+    status:
+      getTripStatus(
+        backendTrip.start_date,
+        backendTrip.end_date
+      ),
 
-    budget: Number(backendTrip.budget || 0),
+    budget:
+      Number(
+        backendTrip.budget || 0
+      ),
 
     currency: "INR",
 
@@ -139,7 +190,9 @@ function normalizeTrip(detail, budgetData) {
       backendTrip.share_token,
 
     isPublic:
-      Boolean(backendTrip.is_public),
+      Boolean(
+        backendTrip.is_public
+      ),
 
     stops,
 
@@ -151,11 +204,19 @@ function normalizeTrip(detail, budgetData) {
 }
 
 
-export function TripProvider({ children }) {
+// ==================================================
+// PROVIDER
+// ==================================================
 
-  const [trips, setTrips] = useState([]);
+export function TripProvider({
+  children
+}) {
 
-  const [cities, setCities] = useState([]);
+  const [trips, setTrips] =
+    useState([]);
+
+  const [cities, setCities] =
+    useState([]);
 
   const [activeTripId, setActiveTripId] =
     useState(null);
@@ -171,69 +232,75 @@ export function TripProvider({ children }) {
   // LOAD ONE TRIP
   // ==================================================
 
-  const loadTrip = useCallback(
-    async (tripId) => {
+  const loadTrip =
+    useCallback(
+      async (tripId) => {
 
-      const [detail, budget] =
-        await Promise.all([
+        const [
+          detail,
+          budget
+        ] = await Promise.all([
           getTrip(tripId),
           getTripBudget(tripId)
         ]);
 
-      return normalizeTrip(
-        detail,
-        budget
-      );
-    },
-    []
-  );
+        return normalizeTrip(
+          detail,
+          budget
+        );
+      },
+      []
+    );
 
 
   // ==================================================
   // LOAD ALL TRIPS
   // ==================================================
 
-  const loadTrips = useCallback(
-    async () => {
+  const loadTrips =
+    useCallback(
+      async () => {
 
-      setLoading(true);
-      setError(null);
+        setLoading(true);
+        setError(null);
 
-      try {
+        try {
 
-        const response =
-          await getTrips();
+          const response =
+            await getTrips();
 
-        const backendTrips =
-          response.trips || [];
+          const backendTrips =
+            response.trips || [];
 
-        const detailedTrips =
-          await Promise.all(
-            backendTrips.map(
-              (trip) =>
-                loadTrip(trip.id)
-            )
+          const detailedTrips =
+            await Promise.all(
+              backendTrips.map(
+                (trip) =>
+                  loadTrip(trip.id)
+              )
+            );
+
+          setTrips(
+            detailedTrips
           );
 
-        setTrips(detailedTrips);
+        } catch (err) {
 
-      } catch (err) {
+          console.error(err);
 
-        console.error(err);
+          setError(
+            err.message ||
+            "Failed to connect to backend"
+          );
 
-        setError(
-          err.message ||
-          "Failed to connect to backend"
-        );
+        } finally {
 
-      } finally {
+          setLoading(false);
 
-        setLoading(false);
-
-      }
-    },
-    [loadTrip]
-  );
+        }
+      },
+      [loadTrip]
+    );
 
 
   // ==================================================
@@ -278,67 +345,94 @@ export function TripProvider({ children }) {
   // ACTIVE TRIP
   // ==================================================
 
-  const activeTrip = useMemo(() => {
+  const activeTrip =
+    useMemo(() => {
 
-    if (!activeTripId) return null;
+      if (!activeTripId) {
+        return null;
+      }
 
-    return trips.find(
-      (trip) =>
-        trip.id === String(activeTripId)
-    ) || null;
+      return trips.find(
+        (trip) =>
+          trip.id ===
+          String(activeTripId)
+      ) || null;
 
-  }, [trips, activeTripId]);
+    }, [
+      trips,
+      activeTripId
+    ]);
 
 
   const setActiveTrip =
-    useCallback((tripId) => {
+    useCallback(
+      (tripId) => {
 
-      setActiveTripId(
-        String(tripId)
-      );
+        setActiveTripId(
+          String(tripId)
+        );
 
-    }, []);
+      },
+      []
+    );
 
 
   // ==================================================
   // CREATE TRIP
   // ==================================================
 
-  const addTrip = useCallback(
-    async (tripData) => {
+  const addTrip =
+    useCallback(
+      async (tripData) => {
 
-      const response =
-        await apiCreateTrip({
-          name: tripData.title,
-          description:
-            tripData.destination || "",
-          start_date:
-            tripData.startDate,
-          end_date:
-            tripData.endDate,
-          budget:
-            Number(tripData.budget || 0)
-        });
+        const response =
+          await apiCreateTrip({
 
-      const createdTrip =
-        await loadTrip(
-          response.trip.id
+            name:
+              tripData.title,
+
+            description:
+              tripData.destination || "",
+
+            start_date:
+              tripData.startDate,
+
+            end_date:
+              tripData.endDate,
+
+            budget:
+              Number(
+                tripData.budget || 0
+              )
+          });
+
+
+        const createdTrip =
+          await loadTrip(
+            response.trip.id
+          );
+
+
+        setTrips(
+          (prev) => [
+            ...prev,
+            createdTrip
+          ]
         );
 
-      setTrips((prev) => [
-        ...prev,
-        createdTrip
-      ]);
 
-      setActiveTripId(
-        String(response.trip.id)
-      );
+        setActiveTripId(
+          String(
+            response.trip.id
+          )
+        );
 
-      return createdTrip;
 
-    },
-    [loadTrip]
-  );
+        return createdTrip;
+
+      },
+      [loadTrip]
+    );
 
 
   // ==================================================
@@ -347,20 +441,26 @@ export function TripProvider({ children }) {
 
   const addStopToTrip =
     useCallback(
-      async (tripId, stop) => {
+      async (
+        tripId,
+        stop
+      ) => {
 
         const cityName =
           stop.location
             .trim()
             .toLowerCase();
 
+
         const city =
           cities.find(
             (c) =>
               c.name
-                .toLowerCase() ===
+                .toLowerCase()
+                .trim() ===
               cityName
           );
+
 
         if (!city) {
 
@@ -369,10 +469,12 @@ export function TripProvider({ children }) {
           );
         }
 
+
         await apiAddStop(
           tripId,
           {
-            city_id: city.id,
+            city_id:
+              city.id,
 
             start_date:
               stop.date,
@@ -383,21 +485,32 @@ export function TripProvider({ children }) {
           }
         );
 
-        const updatedTrip =
-          await loadTrip(tripId);
 
-        setTrips((prev) =>
-          prev.map((trip) =>
-            trip.id === String(tripId)
-              ? updatedTrip
-              : trip
-          )
+        const updatedTrip =
+          await loadTrip(
+            tripId
+          );
+
+
+        setTrips(
+          (prev) =>
+            prev.map(
+              (trip) =>
+                trip.id ===
+                String(tripId)
+                  ? updatedTrip
+                  : trip
+            )
         );
+
 
         return updatedTrip;
 
       },
-      [cities, loadTrip]
+      [
+        cities,
+        loadTrip
+      ]
     );
 
 
@@ -427,16 +540,24 @@ export function TripProvider({ children }) {
           }
         );
 
-        const updatedTrip =
-          await loadTrip(tripId);
 
-        setTrips((prev) =>
-          prev.map((trip) =>
-            trip.id === String(tripId)
-              ? updatedTrip
-              : trip
-          )
+        const updatedTrip =
+          await loadTrip(
+            tripId
+          );
+
+
+        setTrips(
+          (prev) =>
+            prev.map(
+              (trip) =>
+                trip.id ===
+                String(tripId)
+                  ? updatedTrip
+                  : trip
+            )
         );
+
 
         return updatedTrip;
 
@@ -463,23 +584,35 @@ export function TripProvider({ children }) {
               expense.category,
 
             description:
-              expense.title,
+              expense.title ||
+              expense.description ||
+              "",
 
             amount:
-              Number(expense.amount)
+              Number(
+                expense.amount
+              )
           }
         );
 
-        const updatedTrip =
-          await loadTrip(tripId);
 
-        setTrips((prev) =>
-          prev.map((trip) =>
-            trip.id === String(tripId)
-              ? updatedTrip
-              : trip
-          )
+        const updatedTrip =
+          await loadTrip(
+            tripId
+          );
+
+
+        setTrips(
+          (prev) =>
+            prev.map(
+              (trip) =>
+                trip.id ===
+                String(tripId)
+                  ? updatedTrip
+                  : trip
+            )
         );
+
 
         return updatedTrip;
 
@@ -504,15 +637,22 @@ export function TripProvider({ children }) {
           expenseId
         );
 
-        const updatedTrip =
-          await loadTrip(tripId);
 
-        setTrips((prev) =>
-          prev.map((trip) =>
-            trip.id === String(tripId)
-              ? updatedTrip
-              : trip
-          )
+        const updatedTrip =
+          await loadTrip(
+            tripId
+          );
+
+
+        setTrips(
+          (prev) =>
+            prev.map(
+              (trip) =>
+                trip.id ===
+                String(tripId)
+                  ? updatedTrip
+                  : trip
+            )
         );
 
       },
@@ -526,18 +666,27 @@ export function TripProvider({ children }) {
 
   const refreshTrip =
     useCallback(
-      async (tripId) => {
+      async (
+        tripId
+      ) => {
 
         const updatedTrip =
-          await loadTrip(tripId);
+          await loadTrip(
+            tripId
+          );
 
-        setTrips((prev) =>
-          prev.map((trip) =>
-            trip.id === String(tripId)
-              ? updatedTrip
-              : trip
-          )
+
+        setTrips(
+          (prev) =>
+            prev.map(
+              (trip) =>
+                trip.id ===
+                String(tripId)
+                  ? updatedTrip
+                  : trip
+            )
         );
+
 
         return updatedTrip;
 
@@ -550,56 +699,65 @@ export function TripProvider({ children }) {
   // CONTEXT VALUE
   // ==================================================
 
-  const value = useMemo(
-    () => ({
-      trips,
-      cities,
-      activeTrip,
+  const value =
+    useMemo(
+      () => ({
+        trips,
 
-      loading,
-      error,
+        cities,
 
-      addTrip,
+        activeTrip,
 
-      addStopToTrip,
+        loading,
 
-      addActivityToStop,
+        error,
 
-      addExpenseToTrip,
+        addTrip,
 
-      deleteExpenseFromTrip,
+        addStopToTrip,
 
-      refreshTrip,
+        addActivityToStop,
 
-      setActiveTrip
-    }),
-    [
-      trips,
-      cities,
-      activeTrip,
+        addExpenseToTrip,
 
-      loading,
-      error,
+        deleteExpenseFromTrip,
 
-      addTrip,
+        refreshTrip,
 
-      addStopToTrip,
+        setActiveTrip
+      }),
+      [
+        trips,
 
-      addActivityToStop,
+        cities,
 
-      addExpenseToTrip,
+        activeTrip,
 
-      deleteExpenseFromTrip,
+        loading,
 
-      refreshTrip,
+        error,
 
-      setActiveTrip
-    ]
-  );
+        addTrip,
+
+        addStopToTrip,
+
+        addActivityToStop,
+
+        addExpenseToTrip,
+
+        deleteExpenseFromTrip,
+
+        refreshTrip,
+
+        setActiveTrip
+      ]
+    );
 
 
   return (
-    <TripContext.Provider value={value}>
+    <TripContext.Provider
+      value={value}
+    >
       {children}
     </TripContext.Provider>
   );
@@ -616,9 +774,11 @@ export function useTrip() {
     useContext(TripContext);
 
   if (!context) {
+
     throw new Error(
       "useTrip must be used inside TripProvider"
     );
+
   }
 
   return context;
